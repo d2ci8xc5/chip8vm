@@ -1,12 +1,13 @@
 mod cpu;
-mod keyboard;
-mod graphics;
+mod keypad;
+mod display;
+mod font;
 
 use cpu::cpu as _cpu;
 
 fn main() {
   // setup graphics and input
-  let CPU = _cpu::new();
+  let cpuvm = _cpu::new();
   // init chip
 
   // load game
