@@ -138,4 +138,99 @@ impl cpu {
     self.v[x] = self.v[y];
     self.pc += 2;
   }
+
+  // OR Vx, Vy - bitwise OR on Vx and Vy then store result in Vx
+  fn op_8xy1(&mut self, x: usize, y: usize) {
+    self.v[x] |= self.v[y];
+    self.pc += 2;
+  }
+
+  // AND Vx, Vy - bitwise AND on Vx and Vy then store result in Vx
+  fn op_8xy2(&mut self, x: usize, y: usize) {
+    self.v[x] &= self.v[y];
+    self.pc += 2;
+  }
+
+  // XOR Vx, Vy - bitwise XOR on Vx and Vy then store result in Vx
+  fn op_8xy3(&mut self, x: usize, y: usize) {
+    self.v[x] ^= self.v[y];
+    self.pc += 2;
+  }
+
+  // ADD Vx, Vy  
+  fn op_8xy4(&mut self, x: usize, y: usize) {
+    let v_x = self.v[x] as u16;
+    let v_y = self.v[y] as u16;
+    let addition: u8 = (v_x + v_y) as u8;
+    self.v[x] = addition;
+    if addition > 0xff {
+      self.v[0x0f] = 1;
+    } else {
+      self.v[0x0f] = 0;
+    }
+    self.pc += 2;
+  }
+
+  // SUB Vx, Vy
+  fn op_8xy5(&mut self, x: usize, y: usize) {
+    if self.v[x] > self.v[y] {
+      self.v[0x0f] = 1;
+    } else {
+      self.v[0x0f] = 0;
+    }
+    self.v[x] = self.v[x].wrapping_sub(self.v[y]);
+    self.pc += 2;
+  }
+
+  // SHR Vx, Vy
+  fn op_8xy6(&mut self, x: usize, y: usize) {
+    // MSB value check
+    self.v[0x0f] =  (self.v[x] & ( 1 << 7)) >> 7;
+    self.v[x] <<= 1;
+    self.pc += 2;
+  }
+
+  // SUBN Vx, Vy
+  fn op_8xy7(&mut self, x: usize, y: usize) {
+    if self.v[y] > self.v[x] {
+      self.v[0x0f] = 1;
+    } else {
+      self.v[0x0f] = 0;
+    }
+    self.v[x] = self.v[y].wrapping_sub(self.v[x]);
+    self.pc += 2;
+  }
+
+  // SHL Vx, {, Vy} 
+  fn op_8xyE(&mut self, x: usize, y: usize) {
+    self.v[0x0f] = (self.v[x] & ( 1 << 7) >> 7);
+    self.v[x] <<= 1;
+    self.pc += 2;
+  }
+
+  // SNE Vx, Vy 
+  fn op_9xyE(&mut self, x: usize, y: usize) {
+    if self.v[x] != self.v[y] {
+      // skip next instruction
+      self.pc += 4;
+    } else {
+      self.pc += 2;
+    }
+  }
+
+  // LD I, addr 
+  fn op_Annn(&mut self, nnn: usize) {
+    self.i = nnn;
+    self.pc += 2;
+  }
+
+  // JP V0, addr 
+  fn op_Bnnn(&mut self, nnn: usize) {
+    self.pc = nnn + (self.v[0] as usize);
+  }
+  
+  // RND Vx, byte
+  fn op_Cxkk(&mut self, kk : u8) {
+    
+  }
 }
