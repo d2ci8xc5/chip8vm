@@ -4,5 +4,8 @@ version = "0.1.0"
 authors = ["d2ci8xc5 <d2ci8xc5@tuta.io>"]
 edition = "2018"
 
+[dependencies]
+rand = "0.7.2"
+
 [dependencies.sdl2]
 git = "https://github.com/AngryLawyer/rust-sdl2"

@@ -1,6 +1,7 @@
 use crate::font::font;
 use crate::keypad;
 use crate::display;
+use rand::Rng;
 
 pub struct cpu {
   opcode: u16,
@@ -230,7 +231,14 @@ impl cpu {
   }
   
   // RND Vx, byte
-  fn op_Cxkk(&mut self, kk : u8) {
-    
+  fn op_Cxkk(&mut self, x: usize, kk : u8) {
+    let random_byte = rand::thread_rng().gen::<u8>();
+    self.v[x] = (kk & random_byte);   
+    self.pc += 2;
+  }
+
+  // DRW Vx, Vy, nibble
+  fn op_Dxyn(&mut self, x: usize, y: usize, n: u16) {
+    self.v[0x0f] = 0;
   }
 }
