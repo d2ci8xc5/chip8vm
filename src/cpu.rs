@@ -242,5 +242,48 @@ impl cpu {
     self.v[0x0f] = 0;
   }
 
-  // tests
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  #[test]
+  fn test_cpu_new() {
+    let cpuvm = cpu::new();
+    assert_eq!(cpuvm.opcode, 0u16);
+    //assert_eq!(cpuvm.memory, 0u16);
+    //assert_eq!(cpuvm.v, 0u16);
+    //assert_eq!(cpuvm.i, 0u16);
+    //assert_eq!(cpuvm.pc, 0u16);
+    //assert_eq!(cpuvm.gfx, 0u16);
+    //assert_eq!(cpuvm.delay_timer, 0u16);
+    //assert_eq!(cpuvm.sound_timer, 0u16);
+    //assert_eq!(cpuvm.stack, 0u16);
+    //assert_eq!(cpuvm.sp, 0u16);
+    //assert_eq!(cpuvm.key, 0u16);
+
+    //opcode: u16,
+    //memory : [u8; 4096],
+    //v: [u8; 16],
+    //i: usize, //u16
+    //pc: usize, //u16
+    //gfx: [u8; 64*32],
+    //delay_timer: u8,
+    //sound_timer: u8,
+    //stack: [usize; 16], //u16
+    //sp: usize, //u16
+    //key: [u8; 16]
+
+    //opcode: 0,
+    //memory: [0; 4096],
+    //v: [0; 16],
+    //i: 0,
+    //pc: 0x200,
+    //gfx: [0; 64*32],
+    //delay_timer: 0,
+    //sound_timer: 0,
+    //stack: [0; 16],
+    //sp: 0,
+    //key: [0; 16]
+  }
 }
