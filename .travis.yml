@@ -1,19 +1,48 @@
+sudo: false
 language: rust
+# necessary for `travis-cargo coveralls --no-sudo`
+addons:
+  apt:
+    packages:
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+      - binutils-dev # optional: only required for the --verify flag of coveralls
+
 rust:
-  - stable
-  - beta
   - nightly
+  - beta
+  - stable
+
 before_install:
   - sudo apt-get update
   - sudo apt-get install libsdl2-dev libsdl2-gfx-dev
-  - sudo apt-get install  binutils-dev libcurl4-openssl-dev zlib1g-dev libdw-dev libiberty-dev
-jobs:
-  allow_failures:
-    - rust: nightly
-  fast_finish: true
-after_success: |
-    [ $TRAVIS_RUST_VERSION = stable ] &&
-    wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
-    tar xzf master.tar.gz && mkdir kcov-master/build && cd kcov-master/build && cmake .. && make && make install DESTDIR=../tmp && cd ../.. &&
-    ls target/debug &&
-    ./kcov-master/tmp/usr/local/bin/kcov –coveralls-id=$TRAVIS_JOB_ID –exclude-pattern=/.cargo target/kcov target/debug/chip8vm
+
+# load travis-cargo
+before_script:
+  - |
+      pip install 'travis-cargo<0.2' --user &&
+      export PATH=$HOME/.local/bin:$PATH
+
+# the main build
+script:
+  - |
+      travis-cargo build &&
+      travis-cargo test &&
+      travis-cargo bench &&
+      travis-cargo --only stable doc
+after_success:
+  # upload the documentation from the build with stable (automatically only actually
+  # runs on the master branch, not individual PRs)
+  - travis-cargo --only stable doc-upload
+  # measure code coverage and upload to coveralls.io (the verify
+  # argument mitigates kcov crashes due to malformed debuginfo, at the
+  # cost of some speed <https://github.com/huonw/travis-cargo/issues/12>)
+  - travis-cargo coveralls --no-sudo --verify
+
+env:
+  global:
+    # override the default `--features unstable` used for the nightly branch (optional)
+    - TRAVIS_CARGO_NIGHTLY_FEATURE=nightly
+    # encrypted github token for doc upload (see `GH_TOKEN` link above)
+    - secure: "..."
