@@ -241,4 +241,6 @@ impl cpu {
   fn op_Dxyn(&mut self, x: usize, y: usize, n: u16) {
     self.v[0x0f] = 0;
   }
+
+  // tests
 }
