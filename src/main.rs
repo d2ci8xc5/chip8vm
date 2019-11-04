@@ -8,15 +8,14 @@ use cpu::cpu as _cpu;
 
 fn main() {
   // setup graphics and input
-  let sdl_context = sdl2::init().unwrap();
-  
-  let cpuvm = _cpu::new();
+  let mut cpu_vm = _cpu::new();
   // init chip
-
+   
   // load game
-
+  
   loop {
     // emulate cycle
+    cpu_vm.cycle();
 
     // draw if draw flag is set
 
