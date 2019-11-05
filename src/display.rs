@@ -4,10 +4,9 @@ use sdl2::render::Canvas;
 use sdl2::video::Window;
 
 pub struct display {
-  canvas: Canvas<Window> 
+    canvas: Canvas<Window>,
 }
 
 impl display {
-  pub fn new() {
-  }
+    pub fn new() {}
 }
