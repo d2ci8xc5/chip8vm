@@ -18,10 +18,8 @@ pub struct cpu {
 
     redraw_flag: bool,
     keypad_wait_flag: bool,
-    keypad_register: u8 
-
-    //keypad: keypad,
-    //display: display
+    keypad_register: u8, //keypad: keypad,
+                         //display: display
 }
 
 impl cpu {
@@ -39,12 +37,10 @@ impl cpu {
             sp: 0,
             key: [false; 16],
 
-            redraw_flag: false, 
+            redraw_flag: false,
             keypad_wait_flag: false,
-            keypad_register: 0 
-
-            //keypad: keypad::new(),
-            //display: display::new()
+            keypad_register: 0, //keypad: keypad::new(),
+                                //display: display::new()
         };
 
         // init memory to font
@@ -57,9 +53,9 @@ impl cpu {
     pub fn cycle(&mut self) {
         // fetch opcode
         let opcode = self.fetch_opcode();
-        
+
         //slice hex to nibble array
-        //(a,b,c,d) = opcode 
+        //(a,b,c,d) = opcode
         let a: u8 = ((opcode & 0xf000) >> 12) as u8;
         let b: u8 = ((opcode & 0x0f00) >> 8) as u8;
         let c: u8 = ((opcode & 0x00f0) >> 4) as u8;
@@ -77,9 +73,8 @@ impl cpu {
         let y = (opcode & 0x00f0) as usize;
         let kk = (opcode & 0x00ff) as u8;
 
-        
-        match (a,b,c,d) {
-            _ => println!("unknown opcode: {}{}{}{}", a,b,c,d), // make sure to append to pc so that it doesn't run the same (unknown) opcode again
+        match (a, b, c, d) {
+            _ => println!("unknown opcode: {}{}{}{}", a, b, c, d), // make sure to append to pc so that it doesn't run the same (unknown) opcode again
         }
         // execute opcode
         // a,b,c,d are all 2 nibbles wide
@@ -91,12 +86,12 @@ impl cpu {
         //        // reset draw flag
         //        self.redraw_flag = false;
         //    }
-        //    
+        //
         //    // check if cpu required to fetch keypad status
         //    if self.keypad_wait_flag {
         //        // TODO: fetch keypad stauts
         //        //let key = keyboard::fetch_status();
-        //        
+        //
         //        // set register to value
         //        //self.memory[self.keypad_register] = key;
         //        self.keypad_wait_flag = false;
@@ -303,18 +298,20 @@ impl cpu {
         self.pc += 2;
     }
 
-    // SKP Vx 
+    // SKP Vx
     fn op_Ex9E(&mut self, x: usize) {
-        if self.key[self.v[x] as usize] == true { // key is currently pressed
+        if self.key[self.v[x] as usize] == true {
+            // key is currently pressed
             self.pc += 4;
         } else {
             self.pc += 2;
         }
     }
 
-    // SKNP Vx 
+    // SKNP Vx
     fn op_ExA1(&mut self, x: usize) {
-        if self.key[self.v[x] as usize] == false { // key is not currently pressed
+        if self.key[self.v[x] as usize] == false {
+            // key is not currently pressed
             self.pc += 4;
         } else {
             self.pc += 2;
@@ -323,18 +320,63 @@ impl cpu {
 
     // LD Vx, DT
     fn op_Fx07(&mut self, x: usize, delay_timer: u8) {
-       self.v[x] = delay_timer; 
-       self.pc += 2;
+        self.v[x] = delay_timer;
+        self.pc += 2;
     }
-
 
     // wait for keypress implement keypad
     // LD Vx, DT
     fn op_Fx0A(&mut self, x: usize, delay_timer: u8) {
-       self.keypad_wait_flag = true;
-       // cache the keypad register to write at the next cycle
-       self.keypad_register = (x as u8);
-       self.pc += 2;
+        self.keypad_wait_flag = true;
+        // cache the keypad register to write at the next cycle
+        self.keypad_register = (x as u8);
+        self.pc += 2;
+    }
+
+    // LD DT, Vx
+    fn op_Fx15(&mut self, x: usize) {
+        self.delay_timer = self.v[x];
+        self.pc += 2;
+    }
+
+    // LD ST, Vx
+    fn op_Fx18(&mut self, x: usize) {
+        self.sound_timer = self.v[x];
+        self.pc += 2;
+    }
+
+    // ADD I, Vx
+    fn op_Fx1E(&mut self, x: usize) {
+        self.i += self.v[x] as usize;
+        self.pc += 2;
+    }
+
+    // LD F, Vx
+    fn op_Fx29(&mut self, x: usize) {
+        self.i = (self.v[x] as usize) * 5;
+        self.pc += 2;
+    }
+
+    // LD B, Vx
+    fn op_Fx33(&mut self, x: usize) {
+        self.memory[self.i] = self.v[x] / 100;
+        self.memory[self.i + 1] = (self.v[x] % 100) / 10;
+        self.memory[self.i + 2] = self.v[x] % 10;
+        self.pc += 2;
+    }
+
+    fn op_Fx55(&mut self, x: usize) {
+        for i in 0..x + 1 {
+            self.memory[self.i + i] = self.v[i];
+        }
+        self.pc += 2;
+    }
+
+    fn op_Fx65(&mut self, x: usize) {
+        for i in 0..x + 1 {
+            self.v[i] = self.memory[self.i + i];
+        }
+        self.pc += 2;
     }
 }
 
