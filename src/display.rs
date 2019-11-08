@@ -28,7 +28,7 @@ impl display {
     }
 
     // draw sprite
-    pub fn draw(&mut self, cpuvm: &mut cpu) {
+    pub fn draw(&mut self, gfx: [u8; 32*64]) {
         for y in 0..32 {
             for x in 0..64 {
                 let x_true = (x as u32) * SCALE; 
@@ -36,21 +36,26 @@ impl display {
 
                
                 let mut draw_color = color::black.value();
-                if cpuvm.gfx[y*64 + x] == 1 {
+                if gfx[y*64 + x] == 1 {
 
                     draw_color = color::green.value();
                 } else {
                     draw_color = color::black.value();
                 }
                 self.canvas.set_draw_color(draw_color);
-                self.canvas
+                let rect_draw = self.canvas
                     .fill_rect(Rect::new(x as i32, y as i32, SCALE, SCALE));
+
+                match rect_draw {
+                    Ok(x) => continue,
+                    Err(x) => panic!("{:?}", x),
+                }
             }
         }
     }
 
-    pub fn clear(&mut self, cpuvm: &mut cpu) {
-    
+    pub fn clear(&mut self, gfx: [u8; 32*64]) {
+         
     
     }
 }

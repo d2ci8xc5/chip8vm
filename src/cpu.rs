@@ -58,8 +58,8 @@ impl cpu {
         // fetch opcode
         let opcode = self.fetch_opcode();
 
-        //slice hex to nibble array
-        //(a,b,c,d) = opcode
+        // slice hex to four nibbles 
+        // (a,b,c,d) = opcode
         let a: u8 = ((opcode & 0xf000) >> 12) as u8;
         let b: u8 = ((opcode & 0x0f00) >> 8) as u8;
         let c: u8 = ((opcode & 0x00f0) >> 4) as u8;
@@ -79,20 +79,58 @@ impl cpu {
 
         // execute opcode
         match (a, b, c, d) {
+            (0x00, 0x00, 0x0e, 0x00) => self.op_00e0(),
+            (0x00, 0x00, 0x0e, 0x0e) => self.op_00ee(),
+            (0x01, _, _, _) => self.op_1nnn(nnn),
+            (0x02, _, _, _) => self.op_2nnn(nnn),
+            (0x03, _, _, _) => self.op_3xkk(x, kk),
+            (0x04, _, _, _) => self.op_4xkk(x, kk),
+            (0x05, _, _, 0x00) => self.op_5xy0(x, y),
+            (0x06, _, _, _) => self.op_6xkk(x, kk),
+            (0x07, _, _, _) => self.op_7xkk(x, kk),
+            (0x08, _, _, 0x00) => self.op_8xy0(x, y),
+            (0x08, _, _, 0x01) => self.op_8xy1(x, y),
+            (0x08, _, _, 0x02) => self.op_8xy2(x, y),
+            (0x08, _, _, 0x03) => self.op_8xy3(x, y),
+            (0x08, _, _, 0x04) => self.op_8xy4(x, y),
+            (0x08, _, _, 0x05) => self.op_8xy5(x, y),
+            (0x08, _, _, 0x06) => self.op_8xy6(x, y),
+            (0x08, _, _, 0x07) => self.op_8xy7(x, y),
+            (0x08, _, _, 0x0e) => self.op_8xyE(x, y),
+            (0x09, _, _, 0x00) => self.op_9xy0(x, y),
+            (0x0a, _, _, _) => self.op_Annn(nnn),
+            (0x0b, _, _, _) => self.op_Bnnn(nnn),
+            (0x0c, _, _, _) => self.op_Cxkk(x, kk),
+            (0x0d, _, _, _) => self.op_Dxyn(x, y, n as u16),
+            (0x0e, _, 0x09, 0x0e) => self.op_Ex9E(x),
+            (0x0e, _, 0x0a, 0x01) => self.op_ExA1(x),
+            (0x0f, _, 0x0a, 0x07) => self.op_Fx07(x),
+            (0x0f, _, 0x00, 0x0a) => self.op_Fx0A(x),
+            (0x0f, _, 0x01, 0x05) => self.op_Fx15(x),
+            (0x0f, _, 0x01, 0x08) => self.op_Fx18(x),
+            (0x0f, _, 0x01, 0x0e) => self.op_Fx1E(x),
+            (0x0f, _, 0x02, 0x09) => self.op_Fx29(x),
+            (0x0f, _, 0x03, 0x03) => self.op_Fx33(x),
+            (0x0f, _, 0x03, 0x03) => self.op_Fx33(x),
+            (0x0f, _, 0x05, 0x05) => self.op_Fx55(x),
+            (0x0f, _, 0x06, 0x05) => self.op_Fx65(x),
             _ => println!("unknown opcode: {}{}{}{}", a, b, c, d), // make sure to append to pc so that it doesn't run the same (unknown) opcode again
         }
         // check if display must be redrawn
         if self.redraw_flag {
             // redraw display
-
+            //self.display.draw(&mut self);
             // reset draw flag
             self.redraw_flag = false;
         }
 
         // check if cpu required to fetch keypad status
         if self.keypad_wait_flag {
-            // TODO: fetch keypad stauts
-            //let key = keyboard::fetch_status();
+            let poll_keypad;
+            match self.keypad.poll() {
+                Ok(x) => poll_keypad = x,
+                Err(x) => panic!("{:?}", x),
+            }
 
             // set register to value
             //self.memory[self.keypad_register] = key;
@@ -247,7 +285,7 @@ impl cpu {
     }
 
     // SNE Vx, Vy
-    fn op_9xyE(&mut self, x: usize, y: usize) {
+    fn op_9xy0(&mut self, x: usize, y: usize) {
         if self.v[x] != self.v[y] {
             // skip next instruction
             self.pc += 4;
@@ -321,14 +359,14 @@ impl cpu {
     }
 
     // LD Vx, DT
-    fn op_Fx07(&mut self, x: usize, delay_timer: u8) {
-        self.v[x] = delay_timer;
+    fn op_Fx07(&mut self, x: usize) {
+        self.v[x] = self.delay_timer;
         self.pc += 2;
     }
 
     // wait for keypress implement keypad
     // LD Vx, DT
-    fn op_Fx0A(&mut self, x: usize, delay_timer: u8) {
+    fn op_Fx0A(&mut self, x: usize) {
         self.keypad_wait_flag = true;
         // cache the keypad register to write at the next cycle
         self.keypad_register = (x as u8);
@@ -385,9 +423,11 @@ impl cpu {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sdl2; 
     #[test]
     fn test_new() {
-        let cpuvm = cpu::new();
+        let sdl_context = sdl2::init().unwrap();      
+        let cpuvm = cpu::new(&sdl_context);
         assert_eq!(cpuvm.opcode, 0u16);
         for (i, byte) in font.iter().enumerate() {
             assert_eq!(*byte, font[i]);
@@ -403,13 +443,15 @@ mod tests {
         //assert_eq!(cpuvm.key, [0u8; 16]);
     }
 
-    #[test]
-    fn test_cycle() {
-        let cpuvm = cpu::new();
-    }
-
-    #[test]
-    fn test_fetch_opcode() {
-        let cpuvm = cpu::new();
-    }
+//    #[test]
+//    fn test_cycle() {
+//        let sdl_context = sdl2::init().unwrap();      
+//        let cpuvm = cpu::new(&sdl_context);
+//    }
+//
+//    #[test]
+//    fn test_fetch_opcode() {
+//        let sdl_context = sdl2::init().unwrap();      
+//        let cpuvm = cpu::new(&sdl_context);
+//    }
 }
