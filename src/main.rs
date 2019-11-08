@@ -5,7 +5,7 @@ mod font;
 mod keypad;
 
 use cpu::cpu as _cpu;
-use sdl2;
+extern crate sdl2;
 use std::env;
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -17,9 +17,9 @@ fn main() {
     }
     // check for debug
     // setup graphics and input
-    //let mut cpu_vm = _cpu::new(sdl);
+    let sdl_context = sdl2::init().unwrap();
     // init chip
-
+    let mut cpuvm = _cpu::new(&sdl_context);
     // load game
     loop {
         // emulate cycle
