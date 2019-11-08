@@ -1,3 +1,4 @@
+mod color;
 mod cpu;
 mod display;
 mod font;
@@ -14,8 +15,9 @@ fn main() {
     for arg in args.iter() {
         println!("{}", arg);
     }
+    // check for debug
     // setup graphics and input
-    let mut cpu_vm = _cpu::new();
+    //let mut cpu_vm = _cpu::new(sdl);
     // init chip
 
     // load game

@@ -1,6 +1,8 @@
-use crate::display;
 use crate::font::font;
-use crate::keypad;
+use crate::keypad::keypad;
+use crate::display::display;
+
+use sdl2::Sdl;
 use rand::Rng;
 
 pub struct cpu {
@@ -9,21 +11,22 @@ pub struct cpu {
     v: [u8; 16],
     i: usize,  //u16
     pc: usize, //u16
-    gfx: [u8; 64 * 32],
-    delay_timer: u8,
-    sound_timer: u8,
+    pub gfx: [u8; 64 * 32],
+    pub delay_timer: u8,
+    pub sound_timer: u8,
     stack: [usize; 16], //u16
     sp: usize,          //u16
     key: [bool; 16],
 
     redraw_flag: bool,
     keypad_wait_flag: bool,
-    keypad_register: u8, //keypad: keypad,
-                         //display: display
+    keypad_register: u8,
+    keypad: keypad,
+    display: display
 }
 
 impl cpu {
-    pub fn new() -> cpu {
+    pub fn new(sdl_context: &Sdl) -> cpu {
         let mut cpu = cpu {
             opcode: 0,
             memory: [0; 4096],
@@ -39,8 +42,9 @@ impl cpu {
 
             redraw_flag: false,
             keypad_wait_flag: false,
-            keypad_register: 0, //keypad: keypad::new(),
-                                //display: display::new()
+            keypad_register: 0, 
+            keypad: keypad::new(sdl_context),
+            display: display::new(sdl_context),
         };
 
         // init memory to font
@@ -73,30 +77,27 @@ impl cpu {
         let y = (opcode & 0x00f0) as usize;
         let kk = (opcode & 0x00ff) as u8;
 
+        // execute opcode
         match (a, b, c, d) {
             _ => println!("unknown opcode: {}{}{}{}", a, b, c, d), // make sure to append to pc so that it doesn't run the same (unknown) opcode again
         }
-        // execute opcode
-        // a,b,c,d are all 2 nibbles wide
-        //for (a,b,c,d) in opcode {
-        //    // check if display must be redrawn
-        //    if self.redraw_flag {
-        //        // redraw display
+        // check if display must be redrawn
+        if self.redraw_flag {
+            // redraw display
 
-        //        // reset draw flag
-        //        self.redraw_flag = false;
-        //    }
-        //
-        //    // check if cpu required to fetch keypad status
-        //    if self.keypad_wait_flag {
-        //        // TODO: fetch keypad stauts
-        //        //let key = keyboard::fetch_status();
-        //
-        //        // set register to value
-        //        //self.memory[self.keypad_register] = key;
-        //        self.keypad_wait_flag = false;
-        //    }
-        //}
+            // reset draw flag
+            self.redraw_flag = false;
+        }
+
+        // check if cpu required to fetch keypad status
+        if self.keypad_wait_flag {
+            // TODO: fetch keypad stauts
+            //let key = keyboard::fetch_status();
+
+            // set register to value
+            //self.memory[self.keypad_register] = key;
+            self.keypad_wait_flag = false;
+        }
         // update timers
     }
 
@@ -110,6 +111,7 @@ impl cpu {
             self.gfx[i] = 0;
         }
         self.pc += 2;
+        //self.redraw_flag = true;
     }
 
     // RET - return from a subroutine
